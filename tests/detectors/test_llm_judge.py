@@ -60,3 +60,18 @@ def test_prompt_includes_tool_description():
     detector = LLMJudgeDetector(config, client=client)
     detector.scan([_tool("Fetches the weather for a city.")])
     assert "Fetches the weather for a city." in client.prompts_seen[0]
+
+
+def test_does_not_construct_real_client_when_tools_list_is_empty(monkeypatch):
+    from tool_scan.detectors import llm_judge
+
+    def _raise_if_constructed(*args, **kwargs):
+        raise AssertionError(
+            "AnthropicJudgeClient should not be constructed for an empty tool list"
+        )
+
+    monkeypatch.setattr(llm_judge, "AnthropicJudgeClient", _raise_if_constructed)
+
+    config = LLMJudgeConfig(enabled=True)
+    detector = LLMJudgeDetector(config)  # no client injected: must not construct AnthropicJudgeClient here
+    assert detector.scan([]) == []
