@@ -10,11 +10,13 @@ from tool_scan.config import ConfigError, load_config
 from tool_scan.engine import collect_all, run_scan
 from tool_scan.findings import SEVERITY_ORDER, Severity
 from tool_scan.reporters.json_reporter import JsonReporter
+from tool_scan.reporters.sarif import SarifReporter
 from tool_scan.reporters.terminal import TerminalReporter
 
 _REPORTERS = {
     "terminal": TerminalReporter(),
     "json": JsonReporter(),
+    "sarif": SarifReporter(),
 }
 
 
@@ -63,6 +65,9 @@ def scan(config_path: str, update_baseline: bool) -> None:
             click.echo(output)
         elif fmt == "json":
             with open(config.report.json.output_path, "w") as fh:
+                fh.write(output)
+        elif fmt == "sarif":
+            with open(config.report.sarif.output_path, "w") as fh:
                 fh.write(output)
 
     fail_threshold = Severity(config.report.fail_on_severity)
