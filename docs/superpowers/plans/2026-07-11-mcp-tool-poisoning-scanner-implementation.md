@@ -584,6 +584,10 @@ def test_rejects_config_with_no_sources(tmp_path):
 
 
 def test_rejects_config_with_no_detectors_enabled(tmp_path):
+    # heuristic AND taint must both be disabled here: taint defaults to
+    # enabled=True (see TaintConfig below), so leaving it unset would still
+    # count as "one detector enabled" and this test would not exercise the
+    # validator it's named for.
     path = _write(
         tmp_path,
         "config.yaml",
@@ -595,6 +599,8 @@ sources:
     path: "./schemas/*.json"
 detectors:
   heuristic:
+    enabled: false
+  taint:
     enabled: false
 """,
     )
