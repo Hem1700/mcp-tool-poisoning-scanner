@@ -41,6 +41,10 @@ def _build_detectors(config: ScanConfig):
     detectors = []
     if config.detectors.heuristic.enabled:
         detectors.append(HeuristicDetector(config.detectors.heuristic))
+    if config.detectors.llm_judge.enabled:
+        from tool_scan.detectors.llm_judge import LLMJudgeDetector
+
+        detectors.append(LLMJudgeDetector(config.detectors.llm_judge))
     return detectors
 
 

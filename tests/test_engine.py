@@ -84,3 +84,19 @@ def test_build_collectors_creates_mcp_collector_from_config():
     assert len(collectors) == 1
     assert isinstance(collectors[0], McpCollector)
     assert collectors[0].uri == "http://localhost:8931"
+
+
+from tool_scan.detectors.llm_judge import LLMJudgeDetector
+from tool_scan.engine import _build_detectors
+
+
+def test_build_detectors_creates_llm_judge_detector_when_enabled():
+    config = ScanConfig.model_validate(
+        {
+            "version": 1,
+            "sources": [{"type": "raw_json", "name": "s", "path": "./*.json"}],
+            "detectors": {"llm_judge": {"enabled": True}},
+        }
+    )
+    detectors = _build_detectors(config)
+    assert any(isinstance(d, LLMJudgeDetector) for d in detectors)
