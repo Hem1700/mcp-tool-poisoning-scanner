@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+echo "Running test suite before push..."
+if ! pytest -q; then
+    echo ""
+    echo "Push blocked: test suite is failing. Fix tests before pushing." >&2
+    exit 1
+fi
+echo "Test suite passed. Proceeding with push."
