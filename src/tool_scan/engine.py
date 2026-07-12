@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from tool_scan.aggregator import SuppressionSource, aggregate
+from tool_scan.collectors.mcp import McpCollector
 from tool_scan.collectors.python_schema import PythonSchemaCollector
 from tool_scan.collectors.raw_json import RawJsonCollector
 from tool_scan.config import ScanConfig
@@ -21,6 +22,16 @@ def _build_collectors(config: ScanConfig):
                     root_path=source.path,
                     include_glob=source.include_glob,
                     exclude_glob=source.exclude_glob,
+                )
+            )
+        elif source.type == "mcp":
+            collectors.append(
+                McpCollector(
+                    name=source.name,
+                    uri=source.uri,
+                    introspect_only=source.introspect_only,
+                    timeout_seconds=source.timeout_seconds,
+                    token_env=source.auth.token_env if source.auth else None,
                 )
             )
     return collectors

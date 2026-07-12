@@ -67,3 +67,20 @@ def get_weather(city: str) -> str:
     findings = run_scan(config)
     assert len(findings) == 1
     assert findings[0].severity.value == "critical"
+
+
+from tool_scan.collectors.mcp import McpCollector
+from tool_scan.engine import _build_collectors
+
+
+def test_build_collectors_creates_mcp_collector_from_config():
+    config = ScanConfig.model_validate(
+        {
+            "version": 1,
+            "sources": [{"type": "mcp", "name": "internal", "uri": "http://localhost:8931"}],
+        }
+    )
+    collectors = _build_collectors(config)
+    assert len(collectors) == 1
+    assert isinstance(collectors[0], McpCollector)
+    assert collectors[0].uri == "http://localhost:8931"
