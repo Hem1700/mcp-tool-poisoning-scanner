@@ -12,6 +12,7 @@
 
 - Every external dependency (LLM API, MCP server, Docker sandbox, embedding model) MUST be behind an injectable interface (a `Protocol`) with a fake implementation used in the default test suite. `pytest` must pass with zero network access and zero external services running — this is what makes "all tests pass before push" enforceable in a local hook.
 - No detector may be hardcoded on. Defaults exactly match `CONFIG_REFERENCE.md`: `heuristic: true`, all four others `false`. A `ScanConfig` with zero declared sources, or zero enabled detectors, raises `ConfigError` at load time — never a silent no-op.
+- Same principle applies one level down: `HeuristicConfig.rule_packs` defaults to `[]` (Task 1.3) — enabling the heuristic detector does not implicitly load `rules/default_rule_pack.yaml`. Any end-to-end test (or real config) that expects a poisoned-description tool to actually get flagged must explicitly declare `detectors.heuristic.rule_packs: ["rules/default_rule_pack.yaml"]` (or inline `rules:`). This was found and fixed during Task 2.6 (see that task's Step 3) and applies identically to every later end-to-end fixture in Tasks 3.2, 4.2, 5.2, and 5.4.
 - Every `ignore_rules[]` entry MUST have a non-empty `reason`; Pydantic validation rejects entries missing it.
 - Optional-dependency detectors/collectors (`llm_judge`, `ml_anomaly`, `mcp`, `behavioral`) import their third-party package **inside** the function/method that needs it, never at module top level — so `pip install -e .` without extras still works and the default test suite never needs those packages installed.
 - **Normalizer note:** `ARCHITECTURE.md` §5.2 describes a separate Normalizer pass. In this implementation, each Collector constructs the canonical `ToolDefinition` directly rather than emitting an untyped intermediate record for a separate pass to convert — there is no raw shape to normalize *from* once a collector already speaks `ToolDefinition`. This is a deliberate simplification, not a deviation: the contract ("every collector produces `ToolDefinition`") is identical either way.
@@ -1787,6 +1788,7 @@ def test_run_scan_flags_poisoned_tool_end_to_end(tmp_path):
         {
             "version": 1,
             "sources": [{"type": "raw_json", "name": "s", "path": str(tmp_path / "*.json")}],
+            "detectors": {"heuristic": {"rule_packs": ["rules/default_rule_pack.yaml"]}},
         }
     )
     findings = run_scan(config)
@@ -1856,6 +1858,9 @@ sources:
   - type: raw_json
     name: s
     path: "{tmp_path}/*.json"
+detectors:
+  heuristic:
+    rule_packs: ["rules/default_rule_pack.yaml"]
 report:
   fail_on_severity: high
 """
@@ -2250,6 +2255,7 @@ def get_weather(city: str) -> str:
         {
             "version": 1,
             "sources": [{"type": "python_schema", "name": "s", "path": str(tmp_path)}],
+            "detectors": {"heuristic": {"rule_packs": ["rules/default_rule_pack.yaml"]}},
         }
     )
     findings = run_scan(config)
@@ -2476,6 +2482,10 @@ def test_approved_baseline_suppresses_future_scans(tmp_path):
     )
     baseline_path = tmp_path / "baseline.json"
     config_file = tmp_path / "config.yaml"
+    # rule_packs is declared here (unlike the sibling test above) because this
+    # test must prove suppression actually happened, not just that no findings
+    # existed to begin with: without an active rule pack, "No findings" would
+    # pass trivially even if baseline suppression were completely broken.
     config_file.write_text(
         f"""
 version: 1
@@ -2483,6 +2493,9 @@ sources:
   - type: raw_json
     name: s
     path: "{tmp_path}/*.json"
+detectors:
+  heuristic:
+    rule_packs: ["rules/default_rule_pack.yaml"]
 baseline:
   file: "{baseline_path}"
 """
@@ -2821,6 +2834,9 @@ sources:
   - type: raw_json
     name: s
     path: "{tmp_path}/*.json"
+detectors:
+  heuristic:
+    rule_packs: ["rules/default_rule_pack.yaml"]
 report:
   formats: [terminal, sarif]
   sarif:
@@ -2985,6 +3001,9 @@ sources:
   - type: raw_json
     name: s
     path: "{tmp_path}/*.json"
+detectors:
+  heuristic:
+    rule_packs: ["rules/default_rule_pack.yaml"]
 report:
   formats: [terminal, markdown]
   markdown:
