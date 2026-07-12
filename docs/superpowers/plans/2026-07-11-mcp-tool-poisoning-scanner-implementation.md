@@ -6,7 +6,7 @@
 
 **Architecture:** Collectors gather raw tool definitions from MCP servers, Python/TypeScript source, and raw JSON schemas, constructing the canonical `ToolDefinition` directly (see the Normalizer note below). Five independently config-toggleable detectors — Heuristic, LLM-Judge, ML Anomaly, Taint Graph, Behavioral — each scan the same tool set and emit `Finding` objects. An Aggregator dedupes and applies baseline/ignore-rule suppression. Reporters render the surviving findings in the configured output formats. Full design rationale lives in `ARCHITECTURE.md`; full config schema in `CONFIG_REFERENCE.md`.
 
-**Tech Stack:** Python 3.11+, pytest for TDD, Pydantic v2 for config validation, Click for the CLI, PyYAML for config parsing. Phase-specific additions: `anthropic` SDK (Phase 7), `sentence-transformers` + `scikit-learn` (Phase 8), `mcp` official SDK + `anyio` (Phase 6), `docker` SDK (Phase 11).
+**Tech Stack:** Python 3.10+ (standardized down from an initial 3.11+ target during Task 0.1 — the development machine only has 3.10.6 available, and nothing in this plan uses a 3.11-only stdlib feature), pytest for TDD, Pydantic v2 for config validation, Click for the CLI, PyYAML for config parsing. Phase-specific additions: `anthropic` SDK (Phase 7), `sentence-transformers` + `scikit-learn` (Phase 8), `mcp` official SDK + `anyio` (Phase 6), `docker` SDK (Phase 11).
 
 ## Global Constraints
 
@@ -77,7 +77,7 @@ version = "0.1.0"
 description = "Config-driven scanner for tool-poisoning attacks in MCP servers and LLM agent tool definitions"
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = [
     "pyyaml>=6.0",
     "pydantic>=2.6",
@@ -268,7 +268,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.10"
       - run: pip install -e ".[dev]"
       - run: pytest -q
 ```
