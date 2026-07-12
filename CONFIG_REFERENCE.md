@@ -98,6 +98,25 @@ detectors:
     probe_set: "./probes/default_adversarial_probes.yaml"
     baseline_run: "./probes/baseline_benign_trace.json"
 
+  ml_anomaly:
+    enabled: false                # off by default: pulls in an embedding-model dependency
+    embedding_model: "sentence-transformers/all-MiniLM-L6-v2"
+    algorithm: isolation_forest    # isolation_forest | lof | one_class_svm
+    reference_corpus: auto         # "auto" = every tool collected in this scan; or a path to
+                                    # a separate benign-only corpus for scans too small to
+                                    # build a meaningful distribution on their own
+    min_reference_size: 20         # refuses to score below this — too few examples makes
+                                    # "anomalous" a meaningless label
+    contamination: 0.05            # expected outlier proportion, passed to the algorithm
+    anomaly_score_threshold: 0.6   # normalized findings below this are dropped
+    show_nearest_neighbors: 3      # attach N nearest benign examples to each finding as
+                                    # evidence, since a raw distance score is weak evidence
+                                    # on its own for a human reviewer
+    # NOTE: this detector measures statistical typicality, not intent — it will not catch
+    # a "blend-in" injection phrased to match normal tool-description style. See
+    # ARCHITECTURE.md §5.3.5. Do not treat a clean ml_anomaly pass as sufficient on its own;
+    # it exists to cheaply narrow what llm_judge needs to look at closely.
+
 # ── Suppression / baseline ─────────────────────────────────────────
 baseline:
   file: "./.tool-scan-baseline.json"   # auto-created on first run with --update-baseline
@@ -149,6 +168,14 @@ One of `low | medium | high | critical`. Severity is what `report.fail_on_severi
 ### `detectors.taint.trust_tiers`
 
 Any tool named in neither `low_trust` nor `high_trust` is not exempted — it's classified `unclassified` and taint edges touching it are still reported, just at reduced severity, so an incomplete trust-tier list degrades gracefully instead of silently missing tools.
+
+### `detectors.ml_anomaly.min_reference_size`
+
+Guards against a specific false-confidence failure mode: an anomaly detector scored against a handful of reference examples will happily report a confident-looking outlier score that means nothing statistically. Below this count, the detector emits a warning and skips scoring rather than producing a number that looks authoritative but isn't.
+
+### `detectors.ml_anomaly.reference_corpus`
+
+Defaults to `auto` (the other tools in the same scan). Set to a file path for small scans — a two-tool MCP server has no meaningful "normal" to be an outlier from using only its own tools, so pointing at a larger external benign corpus is required to get a usable signal.
 
 ### `baseline.file`
 

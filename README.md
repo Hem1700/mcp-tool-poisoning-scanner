@@ -19,6 +19,7 @@ See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the full threat model, system des
 3. **Detect** via a pipeline of independently config-toggleable detectors:
    - a fast heuristic rule engine (pattern-based, no external calls, on by default)
    - an optional LLM-as-judge semantic analyzer
+   - an ML anomaly detector (embeddings + Isolation Forest/LOF, needs no labeled poison data — but by design can't catch injections phrased to blend in statistically, which is what the LLM-judge and taint layers are for)
    - a taint-graph analyzer that traces whether one tool's output can steer another tool's input
    - an optional sandboxed behavioral prober that runs the real agent against adversarial goals
 4. **Aggregate** findings, apply baseline suppression (hash-based, requires explicit review to approve), and score severity.
@@ -46,6 +47,7 @@ See the "Non-goals" and "Known limitations" sections of `ARCHITECTURE.md` for th
 - [ ] Baseline/suppression store
 - [ ] SARIF reporter (CI integration)
 - [ ] LLM-as-judge detector
+- [ ] ML anomaly detector (embeddings + Isolation Forest/LOF, no labeled poison data required)
 - [ ] Taint graph analyzer (static mode)
 - [ ] `ts_schema` collector
 - [ ] Behavioral prober (sandboxed, dynamic mode)
