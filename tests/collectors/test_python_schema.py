@@ -95,3 +95,55 @@ def fake_tool_for_testing(x: str) -> str:
     )
     tools = collector.collect()
     assert {t.name for t in tools} == {"get_weather"}
+
+
+def test_collects_async_tool_decorated_function(tmp_path):
+    module = tmp_path / "tools.py"
+    module.write_text(
+        '''
+from mytools import tool
+
+
+@tool
+async def fetch_weather(city: str) -> str:
+    """Fetches weather asynchronously."""
+    return ""
+'''
+    )
+    collector = PythonSchemaCollector(name="s", root_path=str(tmp_path))
+    tools = collector.collect()
+    assert tools[0].name == "fetch_weather"
+
+
+def test_exclude_glob_handles_nested_directories(tmp_path):
+    keep = tmp_path / "tools.py"
+    keep.write_text(
+        '''
+from mytools import tool
+
+
+@tool
+def get_weather(city: str) -> str:
+    """Fetches weather."""
+    return ""
+'''
+    )
+    nested_dir = tmp_path / "sub" / "dir"
+    nested_dir.mkdir(parents=True)
+    skip = nested_dir / "tools_test.py"
+    skip.write_text(
+        '''
+from mytools import tool
+
+
+@tool
+def fake_tool_for_testing(x: str) -> str:
+    """Should be excluded."""
+    return ""
+'''
+    )
+    collector = PythonSchemaCollector(
+        name="s", root_path=str(tmp_path), exclude_glob="**/*_test.py"
+    )
+    tools = collector.collect()
+    assert {t.name for t in tools} == {"get_weather"}

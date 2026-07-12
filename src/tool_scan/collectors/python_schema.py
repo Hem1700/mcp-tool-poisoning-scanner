@@ -2,12 +2,32 @@ from __future__ import annotations
 
 import ast
 import glob
+import re
 from pathlib import Path
 
 from tool_scan.collectors.base import Collector
 from tool_scan.models import SourceType, ToolDefinition
 
 _TOOL_DECORATOR_NAMES = {"tool"}
+
+
+def _glob_to_regex(pattern: str) -> re.Pattern[str]:
+    """Translate a glob pattern (supporting **/ as zero-or-more directories,
+    * as any characters except /, ? as one character except /) into a regex
+    anchored to match a full relative path."""
+    translated = pattern.replace("**/", "\x00")
+    translated = translated.replace("**", ".*")
+    parts = []
+    for char in translated:
+        if char == "\x00":
+            parts.append("(?:.*/)?")
+        elif char == "*":
+            parts.append("[^/]*")
+        elif char == "?":
+            parts.append("[^/]")
+        else:
+            parts.append(re.escape(char))
+    return re.compile("^" + "".join(parts) + "$")
 
 
 def _decorator_name(node: ast.expr) -> str | None:
@@ -20,11 +40,11 @@ def _decorator_name(node: ast.expr) -> str | None:
     return None
 
 
-def _is_tool_decorated(func: ast.FunctionDef) -> bool:
+def _is_tool_decorated(func: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
     return any(_decorator_name(dec) in _TOOL_DECORATOR_NAMES for dec in func.decorator_list)
 
 
-def _extract_parameters(func: ast.FunctionDef) -> dict:
+def _extract_parameters(func: ast.FunctionDef | ast.AsyncFunctionDef) -> dict:
     properties = {}
     for arg in func.args.args:
         if arg.arg == "self":
@@ -46,20 +66,23 @@ class PythonSchemaCollector(Collector):
         self.root_path = root_path
         self.include_glob = include_glob
         self.exclude_glob = exclude_glob
+        self._exclude_regex = _glob_to_regex(exclude_glob) if exclude_glob else None
 
     def collect(self) -> list[ToolDefinition]:
         tools: list[ToolDefinition] = []
         pattern = str(Path(self.root_path) / self.include_glob)
 
         for file_path in sorted(glob.glob(pattern, recursive=True)):
-            file_path_obj = Path(file_path)
-            # Use Path.match() for exclude_glob to support ** patterns
-            if self.exclude_glob and file_path_obj.match(self.exclude_glob):
-                continue
+            if self._exclude_regex:
+                relative_path = Path(file_path).relative_to(self.root_path).as_posix()
+                if self._exclude_regex.match(relative_path):
+                    continue
             source = Path(file_path).read_text()
             tree = ast.parse(source, filename=file_path)
             for node in ast.walk(tree):
-                if isinstance(node, ast.FunctionDef) and _is_tool_decorated(node):
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and _is_tool_decorated(
+                    node
+                ):
                     docstring = ast.get_docstring(node) or ""
                     tools.append(
                         ToolDefinition(
