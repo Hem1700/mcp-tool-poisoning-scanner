@@ -19,10 +19,6 @@ class RawJsonCollector(Collector):
             raw = json.loads(Path(file_path).read_text())
             entries = raw if isinstance(raw, list) else [raw]
             for entry in entries:
-                if not isinstance(entry, dict) or "name" not in entry:
-                    # Not a tool definition (e.g. a baseline or other JSON file
-                    # incidentally matched by the source glob) — skip it.
-                    continue
                 tools.append(
                     ToolDefinition(
                         name=entry["name"],
