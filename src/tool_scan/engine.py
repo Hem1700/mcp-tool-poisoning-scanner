@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from tool_scan.aggregator import SuppressionSource, aggregate
+from tool_scan.collectors.python_schema import PythonSchemaCollector
 from tool_scan.collectors.raw_json import RawJsonCollector
 from tool_scan.config import ScanConfig
 from tool_scan.detectors.heuristic import HeuristicDetector
@@ -13,6 +14,15 @@ def _build_collectors(config: ScanConfig):
     for source in config.sources:
         if source.type == "raw_json":
             collectors.append(RawJsonCollector(name=source.name, path_glob=source.path))
+        elif source.type == "python_schema":
+            collectors.append(
+                PythonSchemaCollector(
+                    name=source.name,
+                    root_path=source.path,
+                    include_glob=source.include_glob,
+                    exclude_glob=source.exclude_glob,
+                )
+            )
     return collectors
 
 
