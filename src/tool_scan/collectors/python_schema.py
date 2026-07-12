@@ -13,20 +13,27 @@ _TOOL_DECORATOR_NAMES = {"tool"}
 
 def _glob_to_regex(pattern: str) -> re.Pattern[str]:
     """Translate a glob pattern (supporting **/ as zero-or-more directories,
-    * as any characters except /, ? as one character except /) into a regex
-    anchored to match a full relative path."""
-    translated = pattern.replace("**/", "\x00")
-    translated = translated.replace("**", ".*")
+    bare ** as "anything", * as any characters except /, ? as one character
+    except /) into a regex anchored to match a full relative path."""
     parts = []
-    for char in translated:
-        if char == "\x00":
+    i = 0
+    n = len(pattern)
+    while i < n:
+        if pattern[i:i + 3] == "**/":
             parts.append("(?:.*/)?")
-        elif char == "*":
+            i += 3
+        elif pattern[i:i + 2] == "**":
+            parts.append(".*")
+            i += 2
+        elif pattern[i] == "*":
             parts.append("[^/]*")
-        elif char == "?":
+            i += 1
+        elif pattern[i] == "?":
             parts.append("[^/]")
+            i += 1
         else:
-            parts.append(re.escape(char))
+            parts.append(re.escape(pattern[i]))
+            i += 1
     return re.compile("^" + "".join(parts) + "$")
 
 
