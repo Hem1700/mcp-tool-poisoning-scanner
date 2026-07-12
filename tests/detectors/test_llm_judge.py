@@ -75,3 +75,26 @@ def test_does_not_construct_real_client_when_tools_list_is_empty(monkeypatch):
     config = LLMJudgeConfig(enabled=True)
     detector = LLMJudgeDetector(config)  # no client injected: must not construct AnthropicJudgeClient here
     assert detector.scan([]) == []
+
+
+def test_lazily_constructs_and_caches_client_when_tools_present(monkeypatch):
+    from tool_scan.detectors import llm_judge
+
+    construction_calls = []
+
+    class _FakeConstructedClient:
+        def judge(self, prompt: str) -> JudgeVerdict:
+            return JudgeVerdict(suspicious=False, confidence=0.1, rationale="fine")
+
+    def _fake_constructor(*args, **kwargs):
+        construction_calls.append((args, kwargs))
+        return _FakeConstructedClient()
+
+    monkeypatch.setattr(llm_judge, "AnthropicJudgeClient", _fake_constructor)
+
+    config = LLMJudgeConfig(enabled=True)
+    detector = LLMJudgeDetector(config)
+    tools = [_tool("description 1"), _tool("description 2")]
+    detector.scan(tools)
+
+    assert len(construction_calls) == 1
