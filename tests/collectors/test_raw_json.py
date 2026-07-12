@@ -51,3 +51,19 @@ def test_preserves_raw_payload_for_evidence(tmp_path):
     collector = RawJsonCollector(name="s", path_glob=str(tmp_path / "*.json"))
     tools = collector.collect()
     assert tools[0].raw == payload
+
+
+def test_skips_json_files_that_are_not_tool_definitions(tmp_path):
+    tool_file = tmp_path / "weather.json"
+    tool_file.write_text(
+        json.dumps({"name": "get_weather", "description": "Fetches weather.", "parameters": {}})
+    )
+    # Non-tool JSON living alongside tool files (e.g. a baseline file written into
+    # the same scanned directory) must not crash the collector.
+    other_file = tmp_path / "baseline.json"
+    other_file.write_text(json.dumps({"some_tool_id": {"content_hash": "abc"}}))
+
+    collector = RawJsonCollector(name="s", path_glob=str(tmp_path / "*.json"))
+    tools = collector.collect()
+
+    assert [t.name for t in tools] == ["get_weather"]
