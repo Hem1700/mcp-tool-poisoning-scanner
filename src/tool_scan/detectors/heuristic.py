@@ -31,6 +31,8 @@ def _compile_rule(rule: HeuristicRule) -> CompiledRule:
 def load_rule_pack(path: str) -> list[HeuristicRule]:
     with open(path) as fh:
         raw = yaml.safe_load(fh)
+    if raw is None:
+        return []
     return [HeuristicRule(**entry) for entry in raw.get("rules", [])]
 
 

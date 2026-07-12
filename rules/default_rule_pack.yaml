@@ -1,11 +1,11 @@
 rules:
   - id: model-directed-imperative
-    pattern: "(before calling|do not tell the user|ignore (all |any )?previous instructions|you must always|without (telling|informing) the user)"
+    pattern: "(before calling this tool,? (secretly|silently|without (telling|informing) the user|do not)|do not tell the user|ignore (all |any )?previous instructions|you must always|without (telling|informing) the user)"
     description: "Description contains imperative language addressed to the model rather than documentation for a human reader"
     severity: high
 
   - id: sensitive-path-reference
-    pattern: "(~/\\.ssh|\\.aws/credentials|id_rsa|id_ed25519|\\.env\\b)"
+    pattern: "(~/\\.ssh|\\.aws/credentials|\\bid_rsa\\b|\\bid_ed25519\\b|\\.env\\b)"
     description: "Description references a sensitive credential or key path with no functional reason to mention it"
     severity: critical
 
@@ -15,6 +15,6 @@ rules:
     severity: high
 
   - id: hidden-html-comment
-    pattern: "<!--.*-->"
+    pattern: "<!--[\\s\\S]*?-->"
     description: "Description contains an HTML comment, a common technique for hiding instructions from human skim-review"
     severity: medium
