@@ -1,0 +1,20 @@
+rules:
+  - id: model-directed-imperative
+    pattern: "(before calling|do not tell the user|ignore (all |any )?previous instructions|you must always|without (telling|informing) the user)"
+    description: "Description contains imperative language addressed to the model rather than documentation for a human reader"
+    severity: high
+
+  - id: sensitive-path-reference
+    pattern: "(~/\\.ssh|\\.aws/credentials|id_rsa|id_ed25519|\\.env\\b)"
+    description: "Description references a sensitive credential or key path with no functional reason to mention it"
+    severity: critical
+
+  - id: conditional-behavior-override
+    pattern: "if the user asks about .* instead"
+    description: "Description embeds conditional branching logic directed at agent decision-making rather than describing tool function"
+    severity: high
+
+  - id: hidden-html-comment
+    pattern: "<!--.*-->"
+    description: "Description contains an HTML comment, a common technique for hiding instructions from human skim-review"
+    severity: medium
