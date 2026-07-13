@@ -49,6 +49,10 @@ def _build_detectors(config: ScanConfig):
         from tool_scan.detectors.ml_anomaly import MLAnomalyDetector
 
         detectors.append(MLAnomalyDetector(config.detectors.ml_anomaly))
+    if config.detectors.taint.enabled:
+        from tool_scan.detectors.taint import TaintGraphDetector
+
+        detectors.append(TaintGraphDetector(config.detectors.taint))
     return detectors
 
 

@@ -115,3 +115,17 @@ def test_build_detectors_creates_ml_anomaly_detector_when_enabled():
     )
     detectors = _build_detectors(config)
     assert any(isinstance(d, MLAnomalyDetector) for d in detectors)
+
+
+from tool_scan.detectors.taint import TaintGraphDetector
+
+
+def test_build_detectors_creates_taint_detector_by_default():
+    config = ScanConfig.model_validate(
+        {
+            "version": 1,
+            "sources": [{"type": "raw_json", "name": "s", "path": "./*.json"}],
+        }
+    )
+    detectors = _build_detectors(config)
+    assert any(isinstance(d, TaintGraphDetector) for d in detectors)
