@@ -10,9 +10,45 @@ See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the full threat model, system des
 
 ## Status
 
-**Implemented.** Phases 0–11 of the implementation plan are complete — all 5 detectors (heuristic, LLM-as-judge, ML anomaly, taint graph, behavioral prober) and all 4 collectors (raw_json, python_schema, mcp, ts_schema) are wired into the scan engine. See the roadmap below.
+**Implemented.** Phases 0–11 of the implementation plan are complete — all 5 detectors (heuristic, LLM-as-judge, ML anomaly, taint graph, behavioral prober) and all 4 collectors (raw_json, python_schema, mcp, ts_schema) are wired into the scan engine, with 106 passing tests. See the roadmap below, and [known limitations](#known-limitations) for what's deliberately deferred.
 
-## How it will work (summary)
+## Installation
+
+```bash
+pip install -e .
+```
+
+This installs the `tool-scan` CLI with the heuristic detector and `raw_json`/`python_schema`/`ts_schema` collectors — no optional dependencies required. Detectors and collectors with third-party dependencies are gated behind extras, installed only if you enable them:
+
+```bash
+pip install -e ".[llm-judge]"    # LLM-as-judge detector (anthropic)
+pip install -e ".[ml-anomaly]"   # ML anomaly detector (sentence-transformers, scikit-learn)
+pip install -e ".[behavioral]"   # Behavioral prober (docker)
+pip install -e ".[mcp-source]"   # mcp collector (mcp, anyio)
+pip install -e ".[all]"          # everything
+```
+
+## Quick start
+
+```yaml
+# tool-scan.config.yaml
+version: 1
+sources:
+  - type: raw_json
+    name: my-tools
+    path: "./tools/*.json"
+detectors:
+  heuristic:
+    rule_packs: ["rules/default_rule_pack.yaml"]
+```
+
+```bash
+tool-scan scan --config tool-scan.config.yaml
+```
+
+Exit code is `0` for a clean scan, `1` if a finding meets `report.fail_on_severity` (`high` by default — CI-gateable), `2` for an invalid config. Full field-by-field schema: [`CONFIG_REFERENCE.md`](./CONFIG_REFERENCE.md).
+
+## How it works (summary)
 
 1. **Collect** tool definitions from declared sources — MCP servers (via `tools/list` introspection, read-only), Python/TypeScript tool decorators (via static AST parsing, no execution), or raw JSON schemas.
 2. **Normalize** everything into one canonical `ToolDefinition` shape regardless of source.
@@ -38,6 +74,8 @@ See the "Non-goals" and "Known limitations" sections of `ARCHITECTURE.md` for th
 
 ## Roadmap
 
+All 13 items below are implemented. Full task-by-task build log with the exact code for each step: [`docs/superpowers/plans/2026-07-11-mcp-tool-poisoning-scanner-implementation.md`](./docs/superpowers/plans/2026-07-11-mcp-tool-poisoning-scanner-implementation.md).
+
 - [x] Architecture and config specification
 - [x] Normalizer + `ToolDefinition` IR
 - [x] Heuristic Rule Engine + default rule pack
@@ -51,6 +89,14 @@ See the "Non-goals" and "Known limitations" sections of `ARCHITECTURE.md` for th
 - [x] Taint graph analyzer (static mode)
 - [x] `ts_schema` collector
 - [x] Behavioral prober (sandboxed, dynamic mode)
+
+## Known limitations
+
+Tracked gaps, deliberately deferred rather than fixed ad hoc — see `ARCHITECTURE.md`'s "Known limitations" section for the detector-level tradeoffs (ML anomaly blend-in blind spot, taint over-approximation, etc.). Implementation-level gaps found during the build:
+
+- **`raw_json` crashes on non-tool JSON matched by a source glob** — a stray file like `package.json` living in a scanned directory raises `KeyError`/`TypeError` instead of being skipped with a warning. Top-priority follow-up.
+- **No detector inspects tool `parameters`** — only descriptions and names are analyzed, despite the threat model naming parameter schemas as in-scope. A parameter-schema detector is a natural next detector to add.
+- Minor: the `**`-glob translator is duplicated between `python_schema.py`/`ts_schema.py`; a few config fields re-spell the severity literal instead of referencing the `Severity` enum; behavioral-prober findings aren't baseline-suppressible; `--update-baseline` doesn't warn when approving currently-flagged tools; a few file-writing paths don't create parent directories.
 
 ## License
 
