@@ -129,3 +129,18 @@ def test_build_detectors_creates_taint_detector_by_default():
     )
     detectors = _build_detectors(config)
     assert any(isinstance(d, TaintGraphDetector) for d in detectors)
+
+
+from tool_scan.collectors.ts_schema import TsSchemaCollector
+
+
+def test_build_collectors_creates_ts_schema_collector_from_config():
+    config = ScanConfig.model_validate(
+        {
+            "version": 1,
+            "sources": [{"type": "ts_schema", "name": "frontend", "path": "./src/tools"}],
+        }
+    )
+    collectors = _build_collectors(config)
+    assert len(collectors) == 1
+    assert isinstance(collectors[0], TsSchemaCollector)

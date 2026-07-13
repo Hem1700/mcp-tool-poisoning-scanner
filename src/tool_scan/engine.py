@@ -4,6 +4,7 @@ from tool_scan.aggregator import SuppressionSource, aggregate
 from tool_scan.collectors.mcp import McpCollector
 from tool_scan.collectors.python_schema import PythonSchemaCollector
 from tool_scan.collectors.raw_json import RawJsonCollector
+from tool_scan.collectors.ts_schema import TsSchemaCollector
 from tool_scan.config import ScanConfig
 from tool_scan.detectors.heuristic import HeuristicDetector
 from tool_scan.findings import Finding
@@ -32,6 +33,15 @@ def _build_collectors(config: ScanConfig):
                     introspect_only=source.introspect_only,
                     timeout_seconds=source.timeout_seconds,
                     token_env=source.auth.token_env if source.auth else None,
+                )
+            )
+        elif source.type == "ts_schema":
+            collectors.append(
+                TsSchemaCollector(
+                    name=source.name,
+                    root_path=source.path,
+                    include_glob=source.include_glob,
+                    exclude_glob=source.exclude_glob,
                 )
             )
     return collectors
