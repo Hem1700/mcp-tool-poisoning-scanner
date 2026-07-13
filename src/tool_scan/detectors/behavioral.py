@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections import Counter
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -74,7 +75,9 @@ class BehavioralProberDetector(Detector):
             result = self.sandbox.run_probe(probe["goal"], self.config.sandbox.timeout_seconds)
             expected = baseline_traces.get(result.probe_id, [])
             if result.tool_call_sequence != expected:
-                unexpected_calls = [c for c in result.tool_call_sequence if c not in expected]
+                actual_counts = Counter(result.tool_call_sequence)
+                expected_counts = Counter(expected)
+                unexpected_calls = list((actual_counts - expected_counts).elements())
                 findings.append(
                     Finding(
                         tool_id=probe["id"],

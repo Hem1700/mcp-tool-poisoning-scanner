@@ -63,3 +63,42 @@ def test_raises_when_constructed_while_disabled():
     config = BehavioralConfig(enabled=False)
     with pytest.raises(RuntimeError, match="disabled in config"):
         BehavioralProberDetector(config)
+
+
+def test_docker_sandbox_construction_does_not_import_docker_package(monkeypatch):
+    import builtins
+
+    real_import = builtins.__import__
+
+    def _blocking_import(name, *args, **kwargs):
+        if name == "docker":
+            raise AssertionError("docker package should not be imported during construction")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", _blocking_import)
+
+    from tool_scan.detectors.behavioral import DockerSandbox
+
+    sandbox = DockerSandbox(image="agent-sandbox:latest", network="none")
+    config = BehavioralConfig(enabled=True, sandbox=SandboxConfig(image="agent-sandbox:latest"))
+    detector = BehavioralProberDetector(config)
+
+    assert isinstance(detector.sandbox, DockerSandbox)
+
+
+def test_flags_repeated_call_as_unexpected_even_when_name_matches_baseline(tmp_path):
+    probe_set = _write_probes(tmp_path, ["repeated_call_probe"])
+    baseline_run = _write_baseline(tmp_path, {"repeated_call_probe": ["search_web"]})
+    config = BehavioralConfig(
+        enabled=True,
+        sandbox=SandboxConfig(image="agent-sandbox:latest"),
+        probe_set=probe_set,
+        baseline_run=baseline_run,
+    )
+    sandbox = FakeSandbox({"repeated_call_probe": ["search_web", "search_web"]})
+    detector = BehavioralProberDetector(config, sandbox=sandbox)
+    findings = detector.scan([])
+    assert len(findings) == 1
+    evidence = findings[0].evidence
+    unexpected_portion = evidence.split("unexpected_calls=")[1]
+    assert "search_web" in unexpected_portion
