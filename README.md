@@ -10,7 +10,7 @@ See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the full threat model, system des
 
 ## Status
 
-**Design phase.** This repository currently contains the architecture and configuration specification, written before implementation so the build has a fixed target. No code yet — see the roadmap below.
+**Implemented.** Phases 0–11 of the implementation plan are complete — all 5 detectors (heuristic, LLM-as-judge, ML anomaly, taint graph, behavioral prober) and all 4 collectors (raw_json, python_schema, mcp, ts_schema) are wired into the scan engine. See the roadmap below.
 
 ## How it will work (summary)
 
@@ -39,18 +39,18 @@ See the "Non-goals" and "Known limitations" sections of `ARCHITECTURE.md` for th
 ## Roadmap
 
 - [x] Architecture and config specification
-- [ ] Normalizer + `ToolDefinition` IR
-- [ ] Heuristic Rule Engine + default rule pack
-- [ ] `raw_json` and `python_schema` collectors
-- [ ] Terminal + JSON reporters
-- [ ] `mcp` collector (introspection-only)
-- [ ] Baseline/suppression store
-- [ ] SARIF reporter (CI integration)
-- [ ] LLM-as-judge detector
-- [ ] ML anomaly detector (embeddings + Isolation Forest/LOF, no labeled poison data required)
-- [ ] Taint graph analyzer (static mode)
-- [ ] `ts_schema` collector
-- [ ] Behavioral prober (sandboxed, dynamic mode)
+- [x] Normalizer + `ToolDefinition` IR
+- [x] Heuristic Rule Engine + default rule pack
+- [x] `raw_json` and `python_schema` collectors
+- [x] Terminal + JSON reporters
+- [x] `mcp` collector (introspection-only)
+- [x] Baseline/suppression store
+- [x] SARIF reporter (CI integration)
+- [x] LLM-as-judge detector
+- [x] ML anomaly detector (embeddings + Isolation Forest/LOF, no labeled poison data required)
+- [x] Taint graph analyzer (static mode)
+- [x] `ts_schema` collector
+- [x] Behavioral prober (sandboxed, dynamic mode)
 
 ## License
 

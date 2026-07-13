@@ -1,6 +1,6 @@
 # Architecture
 
-Status: design phase, pre-implementation. This document specifies the system before any code is written so the implementation has a fixed target.
+Status: Phases 0–11 are implemented. This document specifies the system design; see [`docs/superpowers/plans/2026-07-11-mcp-tool-poisoning-scanner-implementation.md`](./docs/superpowers/plans/2026-07-11-mcp-tool-poisoning-scanner-implementation.md) for how it was built, task by task.
 
 ## 1. Problem statement
 
