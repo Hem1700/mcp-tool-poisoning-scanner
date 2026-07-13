@@ -77,7 +77,11 @@ class MLAnomalyDetector(Detector):
             if normalized[i] < self.config.anomaly_score_threshold:
                 continue
             distances = sorted(
-                ((j, _cosine_distance(embeddings[i], embeddings[j])) for j in range(len(tools)) if j != i),
+                (
+                    (j, _cosine_distance(embeddings[i], embeddings[j]))
+                    for j in range(len(tools))
+                    if j != i and normalized[j] < self.config.anomaly_score_threshold
+                ),
                 key=lambda pair: pair[1],
             )
             neighbor_names = [tools[j].name for j, _ in distances[: self.config.show_nearest_neighbors]]
