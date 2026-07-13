@@ -1,6 +1,10 @@
+import pytest
+
 from tool_scan.config import MLAnomalyConfig
 from tool_scan.detectors.ml_anomaly import MLAnomalyDetector
 from tool_scan.models import SourceType, ToolDefinition
+
+pytest.importorskip("sklearn", reason="MLAnomalyDetector's default scorer requires scikit-learn")
 
 
 class FakeEmbedder:
