@@ -144,3 +144,31 @@ def test_build_collectors_creates_ts_schema_collector_from_config():
     collectors = _build_collectors(config)
     assert len(collectors) == 1
     assert isinstance(collectors[0], TsSchemaCollector)
+
+
+from tool_scan.config import SandboxConfig
+from tool_scan.detectors.behavioral import BehavioralProberDetector
+
+
+def test_build_detectors_creates_behavioral_detector_when_enabled(tmp_path):
+    probes_path = tmp_path / "probes.yaml"
+    probes_path.write_text("probes: []\n")
+    baseline_path = tmp_path / "baseline.json"
+    baseline_path.write_text('{"traces": []}')
+
+    config = ScanConfig.model_validate(
+        {
+            "version": 1,
+            "sources": [{"type": "raw_json", "name": "s", "path": "./*.json"}],
+            "detectors": {
+                "behavioral": {
+                    "enabled": True,
+                    "sandbox": {"image": "agent-sandbox:latest"},
+                    "probe_set": str(probes_path),
+                    "baseline_run": str(baseline_path),
+                }
+            },
+        }
+    )
+    detectors = _build_detectors(config)
+    assert any(isinstance(d, BehavioralProberDetector) for d in detectors)

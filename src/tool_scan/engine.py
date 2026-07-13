@@ -63,6 +63,10 @@ def _build_detectors(config: ScanConfig):
         from tool_scan.detectors.taint import TaintGraphDetector
 
         detectors.append(TaintGraphDetector(config.detectors.taint))
+    if config.detectors.behavioral.enabled:
+        from tool_scan.detectors.behavioral import BehavioralProberDetector
+
+        detectors.append(BehavioralProberDetector(config.detectors.behavioral))
     return detectors
 
 
