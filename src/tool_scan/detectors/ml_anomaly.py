@@ -52,14 +52,19 @@ class MLAnomalyDetector(Detector):
 
     def __init__(self, config: MLAnomalyConfig, embedder: Embedder | None = None) -> None:
         self.config = config
-        self._embedder = embedder or SentenceTransformerEmbedder(config.embedding_model)
+        self._embedder = embedder
+
+    def _get_embedder(self) -> Embedder:
+        if self._embedder is None:
+            self._embedder = SentenceTransformerEmbedder(self.config.embedding_model)
+        return self._embedder
 
     def scan(self, tools: list[ToolDefinition]) -> list[Finding]:
         if len(tools) < self.config.min_reference_size:
             return []
 
         descriptions = [t.description for t in tools]
-        embeddings = self._embedder.embed(descriptions)
+        embeddings = self._get_embedder().embed(descriptions)
 
         scorer = _build_scorer(self.config.algorithm, self.config.contamination)
         scorer.fit(embeddings)

@@ -100,3 +100,18 @@ def test_build_detectors_creates_llm_judge_detector_when_enabled():
     )
     detectors = _build_detectors(config)
     assert any(isinstance(d, LLMJudgeDetector) for d in detectors)
+
+
+from tool_scan.detectors.ml_anomaly import MLAnomalyDetector
+
+
+def test_build_detectors_creates_ml_anomaly_detector_when_enabled():
+    config = ScanConfig.model_validate(
+        {
+            "version": 1,
+            "sources": [{"type": "raw_json", "name": "s", "path": "./*.json"}],
+            "detectors": {"ml_anomaly": {"enabled": True}},
+        }
+    )
+    detectors = _build_detectors(config)
+    assert any(isinstance(d, MLAnomalyDetector) for d in detectors)

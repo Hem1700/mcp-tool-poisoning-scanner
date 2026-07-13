@@ -45,6 +45,10 @@ def _build_detectors(config: ScanConfig):
         from tool_scan.detectors.llm_judge import LLMJudgeDetector
 
         detectors.append(LLMJudgeDetector(config.detectors.llm_judge))
+    if config.detectors.ml_anomaly.enabled:
+        from tool_scan.detectors.ml_anomaly import MLAnomalyDetector
+
+        detectors.append(MLAnomalyDetector(config.detectors.ml_anomaly))
     return detectors
 
 
